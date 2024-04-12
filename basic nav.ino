@@ -19,16 +19,35 @@ void main(){
     
     while(1){
     //move forward
-    PORTD = 0b00000100; //pin 2 is HIGH
-    PORTD = 0b00000100;
-    delay(1000);
-    
-    //pause for one second
-    PORTD = 0b00000000;
+    PORTD = 0b00101000; //left and right motor forward
     _delay_ms(1000);
     
-    //spin backwards
-    PORTD = 0b10000000; //pin 7 is HIGH
+    //turn 90 degress right 
+    PORTD = 0b00001000; // right motor stops while left motor moves forwards 
+    _delay_ms(1000);
+
+    //move forward
+    PORTD = 0b00101000; //left and right motor forward
+    _delay_ms(1000);
+
+    //turn 90 degress left 
+    PORTD = 0b00100000; // left motor stops while right motor moves forwards 
+    _delay_ms(1000);
+
+    //move forward (half the distance)
+    PORTD = 0b00101000; //left and right motor forward
+    _delay_ms(500);
+    
+    //move backwards for a longer distance
+    PORTD = 0b01010000; //left and right motor backwards
+    _delay_ms(1500);
+
+    //turn 90 degress left 
+    PORTD = 0b00100000; // left motor stops while right motor moves forwards 
+    _delay_ms(1000);
+
+    //move forward
+    PORTD = 0b00101000; //left and right motor forward
     _delay_ms(1000);
     
     //pause for one second

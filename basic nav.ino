@@ -6,8 +6,13 @@ Team Members: Tyler Wisniewski, Ethan Sarpong, Chimdi Anude
 Last Edit (Author/Date): Ethan 04/12 
 
 HARDWARE CONNECTIONS:
+Pin 0 -> Timer Interrupt
+PIN 1 -> Border Interrupt 
+PIN 2 -> Color Sensor Output
 PIN 3 & 4 -> Left H-Bridge Motor
 PIN 5 & 6 -> Right H-Bridge Motor
+PIN 7-10 -> S0-S3 on the Color sensor 
+PINS 11-13 -> QTI Sensors
 
 WIRE COLOR CODE FOR BOARD: 
 Black - Vcc (6V Battery)

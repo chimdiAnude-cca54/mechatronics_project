@@ -8,15 +8,16 @@ Last Edit (Author/Date): Ethan 04/12
 HARDWARE CONNECTIONS:
 PIN A3 & A2 -> Left H-Bridge Motor 3 4
 PIN A1 & A0 -> Right H-Bridge Motor 5 6 
-PIN 0 -> Timer Interrupt for Countdown
-PIN 1 -> Left QTI Sensor 
+PIN 0 -> 
+PIN 1 -> Left QTI Sensor R / pin change
 PIN 2 -> 
-PIN 3 -> 
-PIN 4 -> Right QTI Sensor 
-PIN 5 & 6 -> Pin Change Interrupts for Border
-PIN 7 -> Color Sensor output
+PIN 3 -> Left QTI Sensor R / pin change
+PIN 4 -> Right QTI Sensor R / pin change
+PIN 5 ->
+PIn 6 ->
+PIN 7 -> Color Sensor output/ pin change 
 PIN 8-11 -> S0-S3 on the Color sensor 
-PIN 12 -> Pin Change for Color Sensor
+PIN 12 -> 
 Pin 13 -> 
 
 WIRE COLOR CODE FOR BOARD: 

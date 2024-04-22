@@ -1,0 +1,147 @@
+// MAE 3780: LECTURE 32
+// Color sensing demo
+
+// PINS
+// Color sensor output: 6
+// Color sensor S0-S3: 2-5
+
+// Timer
+volatile unsigned int color;
+
+/**
+ * Listen for interrupts on PCINT2 space
+ */
+ISR(PCINT2_vect) {
+    // Detect rising edge by looking for a non-zero
+    // input signal when the interrupt is triggered
+    if (PIND & 0b10000000) {
+        // Reset the timer count
+        TCNT1 = 0;
+    } else {
+        // Store the timer count
+        color = TCNT1;
+    }
+}
+
+/**
+ * Initialize pins, interrupts, and timer
+ */
+void initColor() {
+    // Enable interrupts globally
+    sei();
+
+    // Initialize interrupts
+    PCICR |= 0b100;
+
+    // Initialize the timer
+    TCCR1A = 0b00; // normal mode
+    TCCR1B = 0b01; // prescaler = 1
+    TCNT1 = 0; // reset timer
+}
+
+/**
+ * Retrieve the timer count and convert to period
+ */
+int getColor() {
+    // Set interrupt pin
+    PCMSK2 |= 0b10000000;
+
+    _delay_ms(5);
+
+    // Divide the step count by 16 to convert from clock ticks
+    // to microseconds, then multiply by 2 to get to full period
+    int us = color / 8; // (1/16) * 2
+
+    // Reset interrupt pin
+    PCMSK2 &= ~0b10000000;
+
+    return us;
+}
+
+/**
+ * Limit a number to a specified set of bounds.
+ */
+int limit(int x, int min, int max) {
+    if (x < min) {
+        return min;
+    }
+
+    if (x > max) {
+        return max;
+    }
+
+    return x;
+}
+
+/**
+ * Fit a number into a new range.
+ */
+float range(float x, float in_min, float in_max, float out_min, float out_max) {
+    return (x - in_min) / (in_max - in_min) * (out_max - out_min) + out_min;
+}
+
+int main(void) {
+    init();
+    Serial.begin(9600);
+
+    // Set pins 0-7
+    //DDRD = 0b00111100; // 2-5 outputs
+    DDRB = 0b001111;
+
+    initColor();
+
+    _delay_ms(10);
+
+    while (1) {
+        // Set 20% scaling, red filter
+        PORTB = 0b00000001;
+
+        // Read red color and map to 0-255 range
+        int red = getColor();
+        int R = limit(range(red, 25.0, 435.0, 255.0, 0), 0, 255);
+
+        _delay_ms(5);
+
+        // Set green filter
+        PORTB = 0b00001101;
+
+        // Read green color and map to 0-255 range
+        int green = getColor();
+        int G = limit(range(green, 27.0, 501.0, 255.0, 0), 0, 255);
+
+        _delay_ms(5);
+
+        // Set blue filter
+        PORTB = 0b00001001;
+
+        // Read blue color and map to 0-255 range
+        int blue = getColor();
+        int B = limit(range(blue, 21.0, 373.0, 255.0, 0), 0, 255);
+
+        Serial.print("red:");
+        Serial.print(red);
+        Serial.print(", green:");
+        Serial.print(green);
+        Serial.print(", blue:");
+        Serial.print(blue);
+        Serial.print(", R:");
+        Serial.print(R);
+        Serial.print(", G:");
+        Serial.print(G);
+        Serial.print(", B:");
+        Serial.print(B);
+        Serial.println();
+                _delay_ms(500);
+
+        // if (R<70 && B<70 && G<70){}
+        //          Serial.print("On Border");
+        //          Serial.println();
+        // }
+        
+        // if else (R>200 & B<210 & G>200)
+
+
+
+                _delay_ms(500);
+    }
+}

@@ -1,7 +1,9 @@
 /*
 Milestone 2: Basic Navigation 
 Team 27
-Team Members: Tyler Wisniewski, Ethan Sarpong, Chimdi Anude 
+Team Members: Tyler Wisniewski, Ethan Sarpong, Chimdi Anude
+
+Last Edit (Author/Date): Ethan 04/12 
 
 HARDWARE CONNECTIONS:
 PIN A3 & A2 -> Left H-Bridge Motor 3 4
@@ -27,14 +29,16 @@ Green - Forward Signal
 Note: The Left H-Bridge Green and Blue Wires were Flipped on the Bread Board
 */
 
+
+
+//#include <stdio.h>
+
 //Global Variables
   int forward = 0b00001010; // pin A3 & A1 are HIGH 3 5
   int backward = 0b00000101; // pin A0 & A2 HIGH 4 6 
   int right = 0b00001001; // PIN A3 & A0 HIGH (Right Wheel Backward - Left Wheel Forward) 3, 6
   int left = 0b00000110; // pin A1 & A2 high (Right Wheel Forward - Left Wheel Backward) 4, 5
-  int PIN_QTI_LEFT = 0b00001000; // pin 3 // bit for QTI Left
-  int PIN_QTI_RIGHT = 0b0010000; // pin 4 // bit QTI Right
-  
+
   // "period" : stores the value of the output wave period in microseconds
   volatile int period;
 
@@ -46,7 +50,8 @@ Note: The Left H-Bridge Green and Blue Wires were Flipped on the Bread Board
   char homeColor;
 
 //Global Variables for QTI
-
+  int PIN_QTI_LEFT = 0b00001000; // pin 3
+  int PIN_QTI_RIGHT = 0b0010000; // pin 4
 
   
 
@@ -142,7 +147,7 @@ void turn_around(int delay){
     _delay_ms(10);
 
     PORTC = forward; 
-    _delay_ms(30);
+    _delay_ms(300);
   }
 
   void enableINTS(){
@@ -187,15 +192,16 @@ int main(void){
   _delay_ms(100);
 
   while(1){
-    //PORTC = forward; 
+    PORTC = forward; 
+    //getColor();
     _delay_ms(100);
 
-    //Serial.println("moving!");
+    Serial.println("moving!");
     _delay_ms(100);
 
     if (getColor() != homeColor){
       Serial.println("away!");
-      _delay_ms(50);
+      _delay_ms(500);
 
       //PORTC = right;
       PORTC = 0;
@@ -204,14 +210,21 @@ int main(void){
       turn_around(1100);
 
       int loop2 = 1;
-      while (loop2 == 1){ 
+      while (loop2 == 1){
         //Goal: stop, after turning around, when we detect border
         bool edge_left = PIND & PIN_QTI_LEFT; //return T or F 
         bool edge_right = PIND & PIN_QTI_RIGHT;
-      
+        _delay_ms(10);
+
         if (edge_left || edge_right){
           PORTC = 0; 
           loop2 = 0; 
+          Serial.println("black");
+          _delay_ms(50);
+        }
+        else {
+          Serial.println("white");
+          _delay_ms(50);
         }
       }
       break;
@@ -223,3 +236,4 @@ int main(void){
 
 
 }
+

@@ -224,8 +224,6 @@ int main(void){
       break;
     }
   }
-
-  PORTC = 0; // finishes the main functions and makes sure the car is stopped
 } 
 
 // Need to play around with delays

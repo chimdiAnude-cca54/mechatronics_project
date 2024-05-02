@@ -36,8 +36,6 @@ Note: The Left H-Bridge Green and Blue Wires were Flipped on the Bread Board
   // "timer" : stores the value of TIMER1 
   volatile int color_timer;
 
-  int threshold = 20; // boundary of yellow and blue
-
   char homeColor; // of whatever we land on
   char awayColor; // 
 
@@ -47,15 +45,14 @@ Note: The Left H-Bridge Green and Blue Wires were Flipped on the Bread Board
 
 // Pin 12 for LED
   int led_toggle = 0b00010000;
+
+// Internal timer
   int htime = 80; // time in home ; every ten counts = 10 seconds 
   int atime = 10; // time in away ; 
 
   
 
 ISR(PCINT2_vect) {	
-    //Serial.println("1");
-    // resets the timer to zero on a rising edge of sensor's output signal,
-    // check if output signal (pin D7) is high
     if(PIND & 0b10000000){
       TCNT1 = 0x00;
     }
@@ -63,7 +60,6 @@ ISR(PCINT2_vect) {
       color_timer = TCNT1;
       //Serial.println("3");
     }
-
 }
 
   
@@ -128,13 +124,13 @@ void initColor() {
     TCNT1 = 0; // reset timer
 }
 
-void avoidBorder(){ // (3) Command for QTI which are on the edges
+void avoidBorder(){ // 
     bool edge_left = PIND & PIN_QTI_LEFT; //return T or F 
     bool edge_right = PIND & PIN_QTI_RIGHT;
     _delay_ms(10);
 
     if(edge_left && !edge_right){
-      PORTC = backward;
+      PORTC = backward; 
       _delay_ms(300);
       PORTC = left; 
       Serial.println("qti left");
@@ -163,59 +159,74 @@ int main(void){
 
   homeColor = where_am_i_color(); // current reading from getColor()
 
-  // (1) With the addition of black, the logic works better if we manually assign the home color
-  if (homeColor == 'B'){
+  // With the addition of black, the logic works better if we manually assign the home color
+  if (homeColor == 'B'){  //Checks Color. Sets the color as home and does the opposite as away. 
     homeColor = 'B';
     awayColor = 'Y';
-  }
+  } // Works within a binary so the code only changes depending on yellow or blue 
   else{
     homeColor = 'Y';
     awayColor = 'B';
   } 
 
-  int i = 0; // (2) internal counter. 
+  int i = 0; // internal counter. 
 
-  while(1){ 
+  //three main loops: (1)Continually Goes Forward (2) While Robot is in Away (3) When Robot makes it back to Home
+
+  //Loop(1): Goes Forward and avoids borders after. 
+  while(i < (htime+atime)){  //Wrote this without testing but recommend playing with the time 
+    // htime and atime = total time
     PORTC = forward; 
     where_am_i_color();
-      
-    while(where_am_i_color() != homeColor && i != htime){ //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
+    avoidBorders();
+    _delay_ms(10);
+
+    i += 1; 
+    
+    //Loop (2): Avoids anything that is not the AWAY COLOR
+    while(where_am_i_color() != homeColor && i != htime){ 
+      //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
         PORTC = forward;
         avoidBorder();
-        i = i + 1; 
+        i = i + 1; //starts counter
 
-        PORTB ^= led_toggle;
-        _delay_ms(10);
+        PORTB ^= led_toggle; //Sets the opposite of whatever is in PIN 12
+        _delay_ms(5); //Delay for the led to flash
 
-        if (i>htime){
-          PORTB |= led_toggle;
+        if (i>htime-1){  // -1 one is there because the loop will stop before htime
+          PORTB |= led_toggle; //LED turns on signaling it will return to home. Stop 
+          i += 1; 
           break;
         }
       }
   
-    while ( i > htime && where_am_i_color() == homeColor){
-      PORTC = forward;
-      i = i + 1; 
+    //Loop (3): Get to Home within the time limit and stop after safely within Home
+    while ( i > (htime-1) && where_am_i_color() == homeColor){ // After the htime is up and the home color is found. 
+      PORTC = forward; //Go forward and avoid borders
+      i += 1; 
       avoidBorder();
 
-      if (where_am_i_color() == awayColor){ 
-          PORTC = backward; 
-          _delay_ms(300);
-          PORTC = left; 
-          _delay_ms(300); 
+      if (where_am_i_color() == awayColor){  // If it hits the away color it will divert
+        PORTC = backward; 
+        _delay_ms(300);
+        PORTC = left; 
+        _delay_ms(300); 
       }
-      if (i > (htime + atime) ) { //stop after 5 seconds in away
-        _delay_ms(100);
+      if (i > (htime + atime) ) { //if the time is up stop 
         PORTC = 0; 
         Serial.println("stop");
         break;
       }
     }
-    if (i>(htime + atime)){ 
+
+    if (i > (htime + atime)){ //backup to stop the car
+      PORTC = 0; 
       break;
     }
   }
-}
 
-// Edits were made within the branch so look at previous edits for working code. 
-  
+  PORTC = 0; // finishes the main functions and makes sure the car is stopped
+} 
+
+// Need to play around with delays
+    

@@ -177,7 +177,6 @@ int main(void){
   while(i < (htime+atime)){  //Wrote this without testing but recommend playing with the time 
     // htime and atime = total time
     PORTC = forward; 
-    where_am_i_color();
     avoidBorders();
     _delay_ms(10);
 

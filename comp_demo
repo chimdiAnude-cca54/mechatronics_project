@@ -143,6 +143,13 @@ void avoidBorder(){ //
       Serial.println("qti right");
       _delay_ms(100);
     }
+    if(edge_left && edge_right){
+      PORTC = backward; 
+      Serial.println("qti front");
+      _delay_ms(300);
+      PORTC = left; 
+      _delay_ms(300);
+    }
 }
 
 int main(void){
@@ -173,19 +180,21 @@ int main(void){
 
   //three main loops: (1)Continually Goes Forward (2) While Robot is in Away (3) When Robot makes it back to Home
 
-  //Loop(1): Goes Forward and avoids borders after. 
+  //Loop(1): Goes Forward and avoids borders.
   while(i < (htime+atime)){  //Wrote this without testing but recommend playing with the time 
     // htime and atime = total time
     PORTC = forward; 
+    where_am_i_color();
     avoidBorders();
     _delay_ms(10);
 
-    i += 1; 
+    i += 1; // counter is within every loop so its continualy counting
     
     //Loop (2): Avoids anything that is not the AWAY COLOR
     while(where_am_i_color() != homeColor && i != htime){ 
       //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
         PORTC = forward;
+        where_am_i_color();
         avoidBorder();
         i = i + 1; //starts counter
 
@@ -204,8 +213,9 @@ int main(void){
       PORTC = forward; //Go forward and avoid borders
       i += 1; 
       avoidBorder();
+      where_am_i_color();
 
-      if (where_am_i_color() == awayColor){  // If it hits the away color it will divert
+      if (where_am_i_color() == homeColor){  // If it hits the away color it will divert
         PORTC = backward; 
         _delay_ms(300);
         PORTC = left; 
@@ -218,12 +228,13 @@ int main(void){
       }
     }
 
-    if (i > (htime + atime)){ //backup to stop the car
+    if (i > (htime + atime)-1){ //backup to stop the car
       PORTC = 0; 
       break;
     }
   }
 } 
+
 
 // Need to play around with delays
     

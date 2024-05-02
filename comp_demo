@@ -45,6 +45,10 @@ Note: The Left H-Bridge Green and Blue Wires were Flipped on the Bread Board
   int PIN_QTI_LEFT = 0b00001000; // pin 3
   int PIN_QTI_RIGHT = 0b0010000; // pin 4
 
+// Pin 12 for LED
+  int led_toggle = 0b00010000;
+  int duration = 200; //every ten counts = 10 seconds 
+
   
 
 ISR(PCINT2_vect) {	
@@ -94,9 +98,9 @@ char where_am_i_color (){
         //int R = limit(range(red, 25.0, 435.0, 255.0, 0), 0, 255);
         Serial.print("color:");
         Serial.println(red);
-        _delay_ms(10);
+        _delay_ms(50);
 
-        if (red<400 && red>115){
+        if (red<700 && red>115){
           //on blue
           return ('B');
         }
@@ -104,10 +108,10 @@ char where_am_i_color (){
           //on yellow
           return ('Y');
         }
-        else if (red>600){ //(3) Using the color sensor to detect black. If it hits black in the middle does command 
+        else if (red>800){ //(3) Using the color sensor to detect black. If it hits black in the middle does command 
           PORTC = backward; 
           Serial.println("qti front");
-          _delay_ms(500);
+          _delay_ms(1000);
           PORTC = left; 
           _delay_ms(900);
         }
@@ -129,21 +133,21 @@ void initColor() {
 void avoidBorder(){ // (3) Command for QTI which are on the edges
     bool edge_left = PIND & PIN_QTI_LEFT; //return T or F 
     bool edge_right = PIND & PIN_QTI_RIGHT;
-    _delay_ms(70);
+    _delay_ms(10);
 
     if(edge_left && !edge_right){
       PORTC = backward;
       _delay_ms(350);
       PORTC = left; 
       Serial.println("qti left");
-      _delay_ms(350);
+      _delay_ms(150);
     }
     if(!edge_left && edge_right){
       PORTC = backward;
       _delay_ms(350);
       PORTC = right;
       Serial.println("qti right");
-      _delay_ms(350);
+      _delay_ms(150);
     }
 }
 
@@ -154,8 +158,8 @@ int main(void){
   //set all GPIO pins (as labeled above)
   DDRC = 0b00001111; //set pins A0-A3 as outputs
   DDRD = 0; // pins 3,4 QTI sensor, pin 7 Color Sensor Ouput
-  DDRB = 0b00001111; // pins 8-11 are outputs (sensors)
-  PORTB = 0b00010001; //20% output frequnecy with blue filter 
+  DDRB = 0b00011111; // pins 8-12 are outputs (sensors)
+  PORTB = 0b00000001; //20% output frequnecy with blue filter 
 
   initColor();
 
@@ -176,53 +180,49 @@ int main(void){
   while(1){ 
     PORTC = forward; 
     where_am_i_color();
-    _delay_ms(10);
+    _delay_ms(100);
     avoidBorder();
 
-    if (where_am_i_color() == awayColor && i != 150){  // (2) when "i" reaches 150 it will come back. 
+    if (where_am_i_color() == awayColor && i != duration){  // 10 counts equals about 1 second.
       Serial.println("in away");
       while(where_am_i_color() != homeColor ){ //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
             // (1) By having the bool in this format, the robot wont exit the loop if the color sensor detects black 
         PORTC = forward;
+        PORTB ^= led_toggle;
+        _delay_ms(10);
         avoidBorder();
-        i = i+1; 
-        Serial.print(i);
+        i = i + 1; // 0.163 is how fast this counter is moving. Going for about 40 seconds
+        Serial.print("i:");
         Serial.println(i);
   
-        if (i<150 && where_am_i_color() == homeColor){
+        if (i<duration && where_am_i_color() == homeColor){
+          _delay_ms(100);
           PORTC = backward; 
           _delay_ms(500);
           PORTC = left; 
-          _delay_ms(900); 
-          i = 0; 
+          _delay_ms(100); 
         }  
+        if (i>duration){
+          PORTB = 0b00010001;
+          break;
+        }
       }
-
+    }
+  
     i = i + 1; 
-      if (i<15 && where_am_i_color() == awayColor){
-          PORTC = backward; 
-          _delay_ms(500);
-          PORTC = left; 
-          _delay_ms(900); 
-       }
-    i = i + 1; 
-    if (i<15 && where_am_i_color() == awayColor){
+    if (i<duration && where_am_i_color() == awayColor){ //will avoid borders for 5 seconds than stop
         PORTC = backward; 
         _delay_ms(500);
         PORTC = left; 
         _delay_ms(900); 
     }
-    if (i==15) {
-      _delay_ms(1000);
+    if (i== (duration + 30) ) {
+      _delay_ms(500);
       PORTC = 0; 
       break;
-
-      }
-
+    }
     }
 
-    }
-
-// Edits were made within the branch so look at 1st version for working code. 
-    
 }
+
+// Edits were made within the branch so look at previous edits for working code. 

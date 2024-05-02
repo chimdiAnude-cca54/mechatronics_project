@@ -47,7 +47,8 @@ Note: The Left H-Bridge Green and Blue Wires were Flipped on the Bread Board
 
 // Pin 12 for LED
   int led_toggle = 0b00010000;
-  int duration = 200; //every ten counts = 10 seconds 
+  int htime = 80; // time in home ; every ten counts = 10 seconds 
+  int atime = 10; // time in away ; 
 
   
 
@@ -64,7 +65,6 @@ ISR(PCINT2_vect) {
     }
 
 }
-
 
   
 /**
@@ -91,8 +91,6 @@ int getColor() {
 }
 
 char where_am_i_color (){
-         // PORTB = 0b000001;
-
         // Read red color and map to 0-255 range
         int red = getColor();
         //int R = limit(range(red, 25.0, 435.0, 255.0, 0), 0, 255);
@@ -111,9 +109,9 @@ char where_am_i_color (){
         else if (red>800){ //(3) Using the color sensor to detect black. If it hits black in the middle does command 
           PORTC = backward; 
           Serial.println("qti front");
-          _delay_ms(1000);
+          _delay_ms(300);
           PORTC = left; 
-          _delay_ms(900);
+          _delay_ms(300);
         }
 }
 
@@ -137,17 +135,17 @@ void avoidBorder(){ // (3) Command for QTI which are on the edges
 
     if(edge_left && !edge_right){
       PORTC = backward;
-      _delay_ms(350);
+      _delay_ms(300);
       PORTC = left; 
       Serial.println("qti left");
-      _delay_ms(150);
+      _delay_ms(100);
     }
     if(!edge_left && edge_right){
       PORTC = backward;
-      _delay_ms(350);
+      _delay_ms(300);
       PORTC = right;
       Serial.println("qti right");
-      _delay_ms(150);
+      _delay_ms(100);
     }
 }
 
@@ -180,49 +178,44 @@ int main(void){
   while(1){ 
     PORTC = forward; 
     where_am_i_color();
-    _delay_ms(100);
-    avoidBorder();
-
-    if (where_am_i_color() == awayColor && i != duration){  // 10 counts equals about 1 second.
-      Serial.println("in away");
-      while(where_am_i_color() != homeColor ){ //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
-            // (1) By having the bool in this format, the robot wont exit the loop if the color sensor detects black 
+      
+    while(where_am_i_color() != homeColor && i != htime){ //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
         PORTC = forward;
+        avoidBorder();
+        i = i + 1; 
+
         PORTB ^= led_toggle;
         _delay_ms(10);
-        avoidBorder();
-        i = i + 1; // 0.163 is how fast this counter is moving. Going for about 40 seconds
-        Serial.print("i:");
-        Serial.println(i);
-  
-        if (i<duration && where_am_i_color() == homeColor){
-          _delay_ms(100);
-          PORTC = backward; 
-          _delay_ms(500);
-          PORTC = left; 
-          _delay_ms(100); 
-        }  
-        if (i>duration){
-          PORTB = 0b00010001;
+
+        if (i>htime){
+          PORTB |= led_toggle;
           break;
         }
       }
-    }
   
-    i = i + 1; 
-    if (i<duration && where_am_i_color() == awayColor){ //will avoid borders for 5 seconds than stop
-        PORTC = backward; 
-        _delay_ms(500);
-        PORTC = left; 
-        _delay_ms(900); 
+    while ( i > htime && where_am_i_color() == homeColor){
+      PORTC = forward;
+      i = i + 1; 
+      avoidBorder();
+
+      if (where_am_i_color() == awayColor){ 
+          PORTC = backward; 
+          _delay_ms(300);
+          PORTC = left; 
+          _delay_ms(300); 
+      }
+      if (i > (htime + atime) ) { //stop after 5 seconds in away
+        _delay_ms(100);
+        PORTC = 0; 
+        Serial.println("stop");
+        break;
+      }
     }
-    if (i== (duration + 30) ) {
-      _delay_ms(500);
-      PORTC = 0; 
+    if (i>(htime + atime)){ 
       break;
     }
-    }
-
+  }
 }
 
 // Edits were made within the branch so look at previous edits for working code. 
+  

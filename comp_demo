@@ -104,7 +104,7 @@ char where_am_i_color (){
           //on yellow
           return ('Y');
         }
-        else if (red>600){
+        else if (red>600){ //(3) Using the color sensor to detect black. If it hits black in the middle does command 
           PORTC = backward; 
           Serial.println("qti front");
           _delay_ms(500);
@@ -126,7 +126,7 @@ void initColor() {
     TCNT1 = 0; // reset timer
 }
 
-void avoidBorder(){
+void avoidBorder(){ // (3) Command for QTI which are on the edges
     bool edge_left = PIND & PIN_QTI_LEFT; //return T or F 
     bool edge_right = PIND & PIN_QTI_RIGHT;
     _delay_ms(70);
@@ -161,6 +161,7 @@ int main(void){
 
   homeColor = where_am_i_color(); // current reading from getColor()
 
+  // (1) With the addition of black, the logic works better if we manually assign the home color
   if (homeColor == 'B'){
     homeColor = 'B';
     awayColor = 'Y';
@@ -170,36 +171,51 @@ int main(void){
     awayColor = 'B';
   } 
 
-  int i = 0;
+  int i = 0; // (2) internal counter. 
 
-  while(1){
+  while(1){ 
     PORTC = forward; 
     where_am_i_color();
     _delay_ms(10);
     avoidBorder();
 
-    if (where_am_i_color() == awayColor && i != 150){
+    if (where_am_i_color() == awayColor && i != 150){  // (2) when "i" reaches 150 it will come back. 
       Serial.println("in away");
-      while(where_am_i_color() != homeColor ){
-      PORTC = forward;
-      avoidBorder();
-      i = i+1; 
-      Serial.print(i);
-      Serial.println(i);
+      while(where_am_i_color() != homeColor ){ //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
+            // (1) By having the bool in this format, the robot wont exit the loop if the color sensor detects black 
+        PORTC = forward;
+        avoidBorder();
+        i = i+1; 
+        Serial.print(i);
+        Serial.println(i);
+  
+        if (i<150 && where_am_i_color() == homeColor){
+          PORTC = backward; 
+          _delay_ms(500);
+          PORTC = left; 
+          _delay_ms(900); 
+          i = 0; 
+        }  
+      }
 
-      if (i<150 && where_am_i_color() == homeColor){
-        PORTC = backward; 
-        _delay_ms(500);
-        PORTC = left; 
-        _delay_ms(900);
+    i = i + 1; 
+      if (i<15 && where_am_i_color() == awayColor){
+          PORTC = backward; 
+          _delay_ms(500);
+          PORTC = left; 
+          _delay_ms(900); 
+       }
+      else {
+        _delay_ms(1000);
+        PORTC = 0; 
+        break;
+
       }
-      }
-      _delay_ms(1000);
-      PORTC = 0; 
-      break;
+
     }
 
     }
 
+// Edits were made within the branch so look at previous edits for working code. 
     
 }

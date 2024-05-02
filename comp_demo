@@ -47,8 +47,8 @@ Note: The Left H-Bridge Green and Blue Wires were Flipped on the Bread Board
   int led_toggle = 0b00010000;
 
 // Internal timer
-  int htime = 450 ; // time in home ; every ten counts = 10 seconds 
-  int atime = 80; // time in away ; 
+  int htime = 80; // time in home ; every ten counts = 10 seconds 
+  int atime = 10; // time in away ; 
 
   
 
@@ -102,6 +102,13 @@ char where_am_i_color (){
           //on yellow
           return ('Y');
         }
+        else if (red>800){ //(3) Using the color sensor to detect black. If it hits black in the middle does command 
+          PORTC = backward; 
+          Serial.println("qti front");
+          _delay_ms(300);
+          PORTC = left; 
+          _delay_ms(300);
+        }
 }
 
 void initColor() {
@@ -122,21 +129,21 @@ void avoidBorder(){ //
     bool edge_right = PIND & PIN_QTI_RIGHT;
     _delay_ms(10);
 
-    if(edge_left && !edge_right){ // if left goes off
+    if(edge_left && !edge_right){
       PORTC = backward; 
       _delay_ms(300);
       PORTC = left; 
       Serial.println("qti left");
       _delay_ms(100);
     }
-    if(!edge_left && edge_right){ //if right goes off
+    if(!edge_left && edge_right){
       PORTC = backward;
       _delay_ms(300);
       PORTC = right;
       Serial.println("qti right");
       _delay_ms(100);
     }
-    if(edge_left && edge_right){  //if both QTI go off
+    if(edge_left && edge_right){
       PORTC = backward; 
       Serial.println("qti front");
       _delay_ms(300);
@@ -187,18 +194,12 @@ int main(void){
     while(where_am_i_color() != homeColor && i != htime){ 
       //using a while loop here helps avoid unnecssary polling and the robot only focuses on what within this loop
         PORTC = forward;
+        where_am_i_color();
         avoidBorder();
         i = i + 1; //starts counter
 
         PORTB ^= led_toggle; //Sets the opposite of whatever is in PIN 12
         _delay_ms(5); //Delay for the led to flash
-      
-        if (where_am_i_color() != awayColor )  {  // If the color is black or home it will reverse 
-          PORTC = backward; 
-          _delay_ms(300);
-          PORTC = left; 
-          _delay_ms(300); 
-        }
 
         if (i>htime-1){  // -1 one is there because the loop will stop before htime
           PORTB |= led_toggle; //LED turns on signaling it will return to home. Stop 
@@ -212,9 +213,10 @@ int main(void){
       PORTC = forward; //Go forward and avoid borders
       i += 1; 
       avoidBorder();
+      where_am_i_color();
 
-      if (where_am_i_color() != homeColor){  // if the color is black or away it will reverse
-        PORTC = backward;
+      if (where_am_i_color() == homeColor){  // If it hits the away color it will divert
+        PORTC = backward; 
         _delay_ms(300);
         PORTC = left; 
         _delay_ms(300); 
@@ -225,12 +227,13 @@ int main(void){
         break;
       }
     }
-    // At the end of the total time stop. 
+
     if (i > (htime + atime)-1){ //backup to stop the car
       PORTC = 0; 
       break;
     }
   }
 } 
+
 
 // Need to play around with delays

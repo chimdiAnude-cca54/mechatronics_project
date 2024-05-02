@@ -205,10 +205,17 @@ int main(void){
           PORTC = left; 
           _delay_ms(900); 
        }
-      else {
-        _delay_ms(1000);
-        PORTC = 0; 
-        break;
+    i = i + 1; 
+    if (i<15 && where_am_i_color() == awayColor){
+        PORTC = backward; 
+        _delay_ms(500);
+        PORTC = left; 
+        _delay_ms(900); 
+    }
+    if (i==15) {
+      _delay_ms(1000);
+      PORTC = 0; 
+      break;
 
       }
 
@@ -216,6 +223,6 @@ int main(void){
 
     }
 
-// Edits were made within the branch so look at previous edits for working code. 
+// Edits were made within the branch so look at 1st version for working code. 
     
 }
